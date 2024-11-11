@@ -1,0 +1,448 @@
+---
+title: "finalProjWorkSpace"
+author: "Daniel Craig"
+date: "2023-05-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Notes:
+# Does a higher Habit Report Score (NOT DAILY QUESTIONS) mean higher self control?
+# Make a call on the ALternative Daily QUestions graph by determining if a higher score across all questions is good or not
+# For the daily.csv; I assume Q1 - Q3 with a response of -1 is a non-response, NOT a report of failure to execute desired behavior
+
+
+
+#Stopping Points:
+# Check for a statistically significant difference between your Segments on Median/Means from Boxplots
+#   This will involve reviewing some stat methods
+# Make your conclusion
+# Maybe show counts of reports of not-performing habit?
+
+
+
+|    Habit strength was measured bi-weekly with a [Self-Report Habit Index](https://onlinelibrary.wiley.com/doi/10.1111/j.1559-1816.2003.tb01951.x) that consisted of 12 statements based on frequency of behavior (ie. Eating fruit frequently, automatically, without thinking, etc.) with responses indicating whether participants felt it applied to them from a scale of 1 (completely disagree) to 7(completely agree).
+
+```{r}
+### ------------              Daily Habit Counts to Create AVGs
+###Overall
+#Question 1
+dailyCountsQ1 <- daily %>% 
+  count(PPN,Q1) %>%
+  filter(Q1 == '1') 
+#Question 2
+dailyCountsQ2 <- daily %>% 
+  count(PPN,Q2) %>%
+  filter(Q2 == '1')
+#Question 3
+dailyCountsQ3 <- daily %>% 
+  count(PPN,Q3) %>%
+  filter(Q3 == '1')
+
+### ------------ By Segment
+
+## ---- Segment 1
+#Question1
+dailyCountsQ1Seg1 <- dailySeg1 %>% 
+  count(PPN,Q1) %>%
+  filter(Q1 == '1') 
+#Question 2
+dailyCountsQ2Seg1 <- dailySeg1 %>% 
+  count(PPN,Q2) %>%
+  filter(Q2 == '1')
+#Question 3
+dailyCountsQ3Seg1 <- dailySeg1 %>% 
+  count(PPN,Q3) %>%
+  filter(Q3 == '1')
+
+## ---- Segment 2
+#Question 1
+dailyCountsQ1Seg2 <- dailySeg2 %>% 
+  count(PPN,Q1) %>%
+  filter(Q1 == '1') 
+#Question 2
+dailyCountsQ2Seg2 <- dailySeg2 %>% 
+  count(PPN,Q2) %>%
+  filter(Q2 == '1')
+#Question 3
+dailyCountsQ3Seg2 <- dailySeg2 %>% 
+  count(PPN,Q3) %>%
+  filter(Q3 == '1')
+
+## ---- Segment 3
+#Question 1
+dailyCountsQ1Seg3 <- dailySeg3 %>% 
+  count(PPN,Q1) %>%
+  filter(Q1 == '1') 
+#Question 2
+dailyCountsQ2Seg3 <- dailySeg3 %>% 
+  count(PPN,Q2) %>%
+  filter(Q2 == '1')
+#Question 3
+dailyCountsQ3Seg3 <- dailySeg3 %>% 
+  count(PPN,Q3) %>%
+  filter(Q3 == '1')
+
+#Wrap it all up into a list
+dailyList <- list(daily,dailySeg1,dailySeg2,dailySeg3,
+                  dailyCountsQ1,dailyCountsQ2,dailyCountsQ3,
+                  dailyCountsQ1Seg1, dailyCountsQ2Seg1, dailyCountsQ3Seg1,
+                  dailyCountsQ1Seg2,dailyCountsQ2Seg2,dailyCountsQ3Seg2,
+                  dailyCountsQ1Seg3,dailyCountsQ2Seg3,dailyCountsQ3Seg3
+                  )
+```
+
+
+Meant to replace "Plots of dailyCounts in Time" code chunk
+```{r}
+ggplot(data = dailyCountsQ1Seg1, aes(y = n)) + 
+  geom_histogram(fill = 'lightblue', color = 'grey') +
+  labs(x = "# of Times Habit was Executed", y = "# of People", title = "Day 1 - 47: Daily Habit Execution Average across Participants") + 
+  geom_vline(xintercept = mean(dailyCountsQ1$n, na.rm = TRUE), lty = 'dashed', color = 'purple') +
+  geom_vline(xintercept = mean(dailyCountsQ1Seg1$n, na.rm = TRUE), lty = 'dashed', color = 'red')
+
+ggplot(data = dailyCountsQ1Seg2, aes(x = n)) + 
+  geom_histogram(fill = 'lightblue', color = 'grey') +
+  labs(x = "# of Times Habit was Executed", y = "# of People", title = "Day 48 - 95: Daily Habit Execution Counts") + 
+  geom_vline(xintercept = mean(dailyCountsQ1$n, na.rm = TRUE), lty = 'dashed', color = 'purple') +
+  geom_vline(xintercept = mean(dailyCountsQ1Seg2$n, na.rm = TRUE), lty = 'dashed', color = 'red')
+
+ggplot(data = dailyCountsQ1Seg3, aes(x = n)) + 
+  geom_histogram(fill = 'lightblue', color = 'grey') +
+  labs(x = "# of Times Habit was Executed", y = "# of People", title = "Day 96+ : Daily Habit Execution Averages across Participants") + 
+  geom_vline(xintercept = mean(dailyCountsQ1$n, na.rm = TRUE), lty = 'dashed', color = 'purple') +
+  geom_vline(xintercept = mean(dailyCountsQ1Seg3$n, na.rm = TRUE), lty = 'dashed', color = 'red')
+```
+
+Habit 5 NUmber Summary
+```{r Habit Summary}
+## Habit Reports Section
+# qHabitReportsAVG <- round(quantile(habitReportsAVG$pAVG), digits = 2)
+# 
+# sdHabitReportsAVG <- round(sd(habitReportsAVG$pAVG), digits = 2)
+# 
+# print(paste0('Habit Strength Reports Averages Number Summary: 
+#              Minimum at ' ,round(summary(habitReportsAVG$pAVG)[1], digits =2),
+#              ' Mean at ', round(summary(habitReportsAVG$pAVG)[3], digits =2),
+#              ' Std. Dev of ',sdHabitReportsAVG,
+#              ' Maximum of ',round(summary(habitReportsAVG$pAVG)[6], digits =2),
+#              ' Quantiles at: ',qHabitReportsAVG[1],' ', qHabitReportsAVG[2],' ', qHabitReportsAVG[3],' ',  qHabitReportsAVG[4], ' ', qHabitReportsAVG[5]))
+```
+
+```{r Habit Reports Slicing}
+## -------------------------   Habit Reports Section
+# habitReports <- habitReport %>%
+#   rowwise() %>%
+#   arrange(PPN) %>%
+#   mutate(avg = mean(c(Q1,Q2,Q3,Q4,Q5,Q6,Q7,Q8,Q9,Q10,Q11,Q12)))
+# 
+# habitReportsAVG <- habitReports %>%
+#   group_by(PPN) %>%
+#   summarise(pAVG = mean(avg))
+
+### Strength of Habit Reports Segment Variable Creation
+# We segmented the data into thirds, determined by number of day (Max day was 143, so 143/3)
+# We do this to allow for drawing relationships over time
+# range(habitReports$DAY)
+# habitReports <- habitReports %>% 
+#   group_by(PPN) %>% 
+#   mutate(SEGMENT = ifelse(DAY < 48, '1', ifelse(DAY >= 48 & DAY < 96, '2', '3')))
+
+#Segment 1
+# habitReportsSeg1 <- habitReports %>% 
+#   group_by(PPN, SEGMENT) %>%
+#   mutate(ppnSegAvg = mean(avg))
+
+## Habit Reports AVG by Segment
+# habitReportsAVG <- habitReports %>%
+#   group_by(PPN) %>%
+#   summarise(pAVG = mean(avg))
+
+```
+
+Habit EDA Graphs
+
+
+
+```{r}
+ggplot(data = habitReports, aes(x = SEGMENT, y = avg)) +
+  geom_violin(fill='lightblue',color = 'grey') + 
+  labs(x = "Segment", y = "Avg Score of Habit Strength")
+```
+
+
+Unnecessary Daily Habit 5 Number Summary
+```{r Daily Summary}
+
+
+## Daily Habit Q1 Counts
+meanQ1 <- mean(dailyCountsQ1$n )
+sdQ1 <- sd(dailyCountsQ1$n)
+minQ1 <- min(dailyCountsQ1$n)
+maxQ1 <- max(dailyCountsQ1$n)
+q25 <- quantile(dailyCountsQ1$n)
+
+print(paste('Daily Habit Execution/Goal Compliance Summary for Q1:', round(meanQ1, digits =2), 'with a standard deviation of',round(sdQ1, digits =2),', a minimum of', minQ1,'a max of ',maxQ1,', and the following quantiles: ',q25[1],q25[2],q25[3],q25[4],q25[5],'.'))
+
+
+## Daily Habit Q2 Counts
+meanQ2 <- mean(dailyCountsQ2$n )
+sdQ2 <- sd(dailyCountsQ2$n)
+minQ2 <- min(dailyCountsQ2$n)
+maxQ2 <- max(dailyCountsQ2$n)
+q252 <- quantile(dailyCountsQ2$n)
+
+print(paste0('Daily Habit Execution/Goal Compliance Summary:
+             Minimum at ',minQ2,
+             'Mean at ', round(meanQ2, digits =2),
+             'Std. Dev of ',round(sdQ2, digits =2),
+             'Maximum of ',maxQ2,
+             'Quantiles at: ',q252[1], ' ',q252[2], ' ',q252[3], ' ', q252[4], ' ',q252[5],'.'))
+## Daily Habit Q3 Counts
+meanQ3 <- mean(dailyCountsQ3$n )
+sdQ3 <- sd(dailyCountsQ3$n)
+minQ3 <- min(dailyCountsQ3$n)
+maxQ3 <- max(dailyCountsQ3$n)
+q253 <- quantile(dailyCountsQ3$n)
+
+print(paste0('Daily Habit Execution/Goal Compliance Summary:
+             Minimum at ',minQ3,
+             'Mean at ', round(meanQ3, digits =2),
+             'Std. Dev of ',round(sdQ3, digits =2),
+             'Maximum of ',maxQ3,
+             'Quantiles at: ',q253[1], ' ',q253[2], ' ',q253[3], ' ', q253[4], ' ',q253[5],'.'))
+```
+
+Unnecessary Self Control Capacity 5 Number Summary
+```{r Self Control Summary}
+## Self Control Section
+qSelfControlAVG <- round(quantile(selfControlAVG$pAVG), digits = 2)
+
+sdSelfControlAVG <- round(sd(selfControlAVG$pAVG), digits = 2)
+
+print(paste0('Self Report Habit Index Strength Averages Number Summary:
+             Minimum at ' ,round(summary(selfControlAVG$pAVG)[1], digits =2),
+             'Mean at ', round(summary(selfControlAVG$pAVG)[3], digits =2),
+             'Std. Dev. of ',sdSelfControlAVG,
+             'Maximum of ',round(summary(selfControlAVG$pAVG)[6], digits =2),
+             'Quantiles at: ',qSelfControlAVG[1],' ', qSelfControlAVG[2],' ', qSelfControlAVG[3], ' ', qSelfControlAVG[4], ' ', qSelfControlAVG[5]))
+  
+```
+
+Unsure if necessary anymore
+```{r Join Averages Together}
+joinedTable <- left_join(dailyCountsQ1,habitReportsAVG, by= 'PPN')
+
+joinedTable <- joinedTable %>% rename(habitAVG = pAVG)
+
+joinedTable <- left_join(joinedTable,selfControlAVG, by = 'PPN')
+
+
+joinedTable
+
+joinedTable <- joinedTable[complete.cases(joinedTable),]
+#joinedTable <- joinedTable[,-6]
+joinedTable <- joinedTable %>% rename(selfControlAVG = pAVG)
+```
+
+Daily Count stuff
+|    Since an aspect of this study is progression over time, cutting the data into thirds across the duration of the study will be performed to attempt at removing potential variables such as growth of self control capacity or waning interest in participation. Below are three graphs that show average daily habit execution within each time frame. These time frames are inside the ranges of day [1 - 47], [48 - 95], and [96 - 144] each labeled under an added variable 'SEGMENT' with values 1, 2, and 3, respectively. Averages within those segments are below, with a purple line to represent the average across the entire study from earlier, and a red line to represent the segment average:
+
+```{r Plots of dailyCounts in Time}
+
+ggplot(data = dailyCountsQ1Seg1, aes(x = as.factor(PPN), y = n)) +
+  geom_bar(stat = "identity", fill = "lightblue") +
+  xlab("Individuals (PPN)") +
+  ylab("Counts (n)") +
+  ggtitle("Distribution of Individuals and Counts")
+
+ggplot(data = dailyCountsQ1Seg2, aes(x = as.factor(PPN), y = n)) +
+  geom_bar(stat = "identity", fill = "lightblue") +
+  xlab("Individuals (PPN)") +
+  ylab("Counts (n)") +
+  ggtitle("Distribution of Individuals and Counts")
+
+ggplot(data = dailyCountsQ1Seg3, aes(x = as.factor(PPN), y = n)) +
+  geom_bar(stat = "identity", fill = "lightblue") +
+  xlab("Individuals (PPN)") +
+  ylab("Counts (n)") +
+  ggtitle("Distribution of Individuals and Counts")
+
+
+```
+
+Self Control by Segment
+
+|    Self Control Graphs
+
+```{r}
+ggplot(data = selfControl, aes(x = SEGMENT, y = avg)) +
+  geom_violin(fill='lightblue',color = 'grey') +
+  labs(x = "Segment", y = "Avg Score of Self Control Capacity",)
+```
+
+Daily Counts Inference
+
+```{r}
+#Segment 1
+#Goal: Join dailyCounts with PPN SEG AVG and graph with color
+dailyCountsQ1SegClassSeg1  <- left_join(dailyCountsQ1Seg1, selfControlClass %>% filter(SEGMENT == '1') %>% select(SEGCLASS), by = "PPN") #NA's meant they didn't fill out the Self Control Capacity Report for that segment
+# selfControlClass %>% filter(PPN == '4010')  | example of an NA value 
+
+dailyCountsQ1SegClassSeg1 <- dailyCountsQ1SegClassSeg1[complete.cases(dailyCountsQ1SegClassSeg1),]
+dailyCountsQ1SegClassSeg1
+
+ggplot(data = dailyCountsQ1SegClassSeg1, aes(y = n,x = SEGCLASS, color = SEGCLASS)) + 
+  geom_boxplot() +
+  labs(x = "# of Times Habit was Executed", y = "# of People", title = "Q1 Day 1 - 47: Daily Habit Execution Average across Participants") 
+
+
+#Segment 2
+dailyCountsQ1SegClassSeg2  <- left_join(dailyCountsQ1Seg1, selfControlClass %>% filter(SEGMENT == '2') %>% select(SEGCLASS), by = "PPN")
+
+dailyCountsQ1SegClassSeg2 <- dailyCountsQ1SegClassSeg2[complete.cases(dailyCountsQ1SegClassSeg2),]
+dailyCountsQ1SegClassSeg2
+
+ggplot(data = dailyCountsQ1SegClassSeg2, aes(y = n,x = SEGCLASS, color = SEGCLASS)) + 
+  geom_boxplot() +
+  labs(x = "# of Times Habit was Executed", y = "# of People", title = "Q1 Day 48 - 95: Daily Habit Execution Average across Participants")
+
+#Segment 3
+dailyCountsQ1SegClassSeg3  <- left_join(dailyCountsQ1Seg1, selfControlClass %>% filter(SEGMENT == '3') %>% select(SEGCLASS), by = "PPN")
+
+dailyCountsQ1SegClassSeg3 <- dailyCountsQ1SegClassSeg3[complete.cases(dailyCountsQ1SegClassSeg3),]
+dailyCountsQ1SegClassSeg3
+
+ggplot(data = dailyCountsQ1SegClassSeg3, aes(y = n,x = SEGCLASS, color = SEGCLASS)) + 
+  geom_boxplot() +
+  labs(x = "# of Times Habit was Executed", y = "# of People", title = "Q1 Day 96+: Daily Habit Execution Average across Participants")
+
+```
+
+|    Ironically enough, it seemed individuals with the highest scores for self control capacity showed the lowest average number of executions for Question 1. Let's repeat this for Question 2
+
+```{r}
+#Segment 1
+#Goal: Join dailyCounts with PPN SEG AVG and graph with color
+dailyCountsQ2SegClassSeg1  <- left_join(dailyCountsQ2Seg1, selfControlClass %>% filter(SEGMENT == '1') %>% select(SEGCLASS), by = "PPN") #NA's meant they didn't fill out the Self Control Capacity Report for that segment
+# selfControlClass %>% filter(PPN == '4010')  | example of an NA value 
+
+dailyCountsQ2SegClassSeg1 <- dailyCountsQ2SegClassSeg1[complete.cases(dailyCountsQ2SegClassSeg1),]
+dailyCountsQ2SegClassSeg1
+
+ggplot(data = dailyCountsQ2SegClassSeg1, aes(y = n,x = SEGCLASS, color = SEGCLASS)) + 
+  geom_boxplot() +
+  labs(x = "# of Times Habit was Executed", y = "# of People", title = "Q2 Day 1 - 47: Daily Habit Execution Average across Participants") 
+
+
+#Segment 2
+dailyCountsQ2SegClassSeg2  <- left_join(dailyCountsQ2Seg2, selfControlClass %>% filter(SEGMENT == '2') %>% select(SEGCLASS), by = "PPN")
+
+dailyCountsQ2SegClassSeg2 <- dailyCountsQ2SegClassSeg2[complete.cases(dailyCountsQ2SegClassSeg2),]
+dailyCountsQ2SegClassSeg2
+
+ggplot(data = dailyCountsQ2SegClassSeg2, aes(y = n,x = SEGCLASS, color = SEGCLASS)) + 
+  geom_boxplot() +
+  labs(x = "# of Times Habit was Executed", y = "# of People", title = "Q2 Day 48 - 95: Daily Habit Execution Average across Participants")
+
+#Segment 3
+dailyCountsQ2SegClassSeg3  <- left_join(dailyCountsQ2Seg3, selfControlClass %>% filter(SEGMENT == '3') %>% select(SEGCLASS), by = "PPN")
+
+dailyCountsQ2SegClassSeg3 <- dailyCountsQ2SegClassSeg3[complete.cases(dailyCountsQ2SegClassSeg3),]
+dailyCountsQ2SegClassSeg3
+
+ggplot(data = dailyCountsQ2SegClassSeg3, aes(y = n,x = SEGCLASS, color = SEGCLASS)) + 
+  geom_boxplot() +
+  labs(y = "# of Times Habit was Executed", x = "Segment", title = "Q2 Day 96+: Daily Habit Execution Average across Participants")
+```
+
+
+
+Another time for Question 3
+
+```{r}
+#Segment 1
+#Goal: Join dailyCounts with PPN SEG AVG and graph with color
+dailyCountsQ3SegClassSeg1  <- left_join(dailyCountsQ3Seg1, selfControlClass %>% filter(SEGMENT == '1') %>% select(SEGCLASS), by = "PPN") #NA's meant they didn't fill out the Self Control Capacity Report for that segment
+# selfControlClass %>% filter(PPN == '4010')  | example of an NA value 
+
+dailyCountsQ3SegClassSeg1 <- dailyCountsQ3SegClassSeg1[complete.cases(dailyCountsQ3SegClassSeg1),]
+
+ggplot(data = dailyCountsQ3SegClassSeg1, aes(y = n,x = SEGCLASS, color = SEGCLASS)) + 
+  geom_boxplot() +
+  labs(x = "# of Times Habit was Executed", y = "# of People", title = "Q3 Day 1 - 47: Daily Habit Execution Average across Participants") 
+
+
+#Segment 2
+dailyCountsQ3SegClassSeg2  <- left_join(dailyCountsQ3Seg2, selfControlClass %>% filter(SEGMENT == '2') %>% select(SEGCLASS), by = "PPN")
+
+dailyCountsQ3SegClassSeg2 <- dailyCountsQ3SegClassSeg2[complete.cases(dailyCountsQ3SegClassSeg2),]
+
+ggplot(data = dailyCountsQ3SegClassSeg2, aes(y = n,x = SEGCLASS, color = SEGCLASS)) + 
+  geom_boxplot() +
+  labs(x = "# of Times Habit was Executed", y = "# of People", title = "Q3 Day 48 - 95: Daily Habit Execution Average across Participants")
+
+#Segment 3
+dailyCountsQ3SegClassSeg3  <- left_join(dailyCountsQ3Seg3, selfControlClass %>% filter(SEGMENT == '3') %>% select(SEGCLASS), by = "PPN")
+
+dailyCountsQ3SegClassSeg3 <- dailyCountsQ3SegClassSeg3[complete.cases(dailyCountsQ3SegClassSeg3),]
+
+ggplot(data = dailyCountsQ3SegClassSeg3, aes(y = n,x = SEGCLASS, color = SEGCLASS)) + 
+  geom_boxplot() +
+  labs(x = "# of Times Habit was Executed", y = "# of People", title = "Q3 Day 96+: Daily Habit Execution Average across Participants")
+```
+
+
+Infer with dailyCounts stuff
+
+```{r}
+anovaQ1Seg1 <- aov(n ~ SEGCLASS, data = dailyCountsQ1SegClassSeg1)
+anovaQ1Seg2 <- aov(n ~ SEGCLASS, data = dailyCountsQ1SegClassSeg2)
+anovaQ1Seg3 <- aov(n ~ SEGCLASS, data = dailyCountsQ1SegClassSeg3)
+summary(anovaQ1Seg1)
+summary(anovaQ1Seg2)
+summary(anovaQ1Seg3)
+
+anovaQ2Seg1 <- aov(n ~ SEGCLASS, data = dailyCountsQ2SegClassSeg1)
+anovaQ2Seg2 <- aov(n ~ SEGCLASS, data = dailyCountsQ2SegClassSeg2)
+anovaQ2Seg3 <- aov(n ~ SEGCLASS, data = dailyCountsQ2SegClassSeg3)
+summary(anovaQ2Seg1)
+summary(anovaQ2Seg2)
+summary(anovaQ2Seg3) # This one showed significance
+
+anovaQ3Seg1 <- aov(n ~ SEGCLASS, data = dailyCountsQ3SegClassSeg1)
+anovaQ3Seg2 <- aov(n ~ SEGCLASS, data = dailyCountsQ3SegClassSeg2)
+anovaQ3Seg3 <- aov(n ~ SEGCLASS, data = dailyCountsQ3SegClassSeg3)
+summary(anovaQ3Seg1)
+summary(anovaQ3Seg2)
+summary(anovaQ3Seg3) # This one showed significance
+
+```
+
+
+|    Of all the questions and segments, only two showed statistically significant difference in means; **Question 3 asked in Days 96+** and **Question 2 asked in Days 96+**. Data tables of this data are repeated below for convenience. Both sections have 50+ individuals that all answered the daily questions on their phone app at least one time in the segments of the study, as well as completed a Self Control Capacity report within the same time segment as the daily phone app questions. This should satisfy assumptions for normality. Let's continue our analysis with Tukey's HSD Test to crystallize which groups are different and by how much.
+```{r}
+dailyCountsQ3SegClassSeg3
+dailyCountsQ2SegClassSeg3
+```
+```{r}
+tukeyQ3Seg3 <- TukeyHSD(anovaQ3Seg3, conf.level = .95)
+tukeyQ3Seg3
+
+tukeyQ2Seg3 <- TukeyHSD(anovaQ2Seg3, conf.level = .95)
+tukeyQ2Seg3
+```
+|    Although the ANOVA concluded there being an overall difference between groups, Tukey's Honestly Signficiant Difference was unable to detect a difference between any pairing of the groups. 
+
+
+
+Row wise classifier
+```{r}
+#Add the classifier to each row observation of whether the score was high or low; this isn't used later
+selfControl <- selfControl %>%
+  mutate(CONTROLCLASS = ifelse(avg <1.30, 'Low', ifelse(avg >= 1.30 & avg < 1.75, 'Mid', 'High')))
+```
+

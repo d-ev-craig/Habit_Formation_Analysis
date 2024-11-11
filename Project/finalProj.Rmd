@@ -1,0 +1,343 @@
+---
+title: DATA 606 Data Final Project - Self Control and its Impacts on Habit Execution
+author: Daniel Craig
+date: "2023-05-21"
+output: rmdformats::readthedown
+---
+
+``` {r Library, message = FALSE}
+library(tidyverse)
+library(infer)
+library(ggplot2)
+library(cowplot)
+library(rmarkdown)
+knitr::opts_chunk$set(include = TRUE, message = FALSE, echo = TRUE)
+
+```
+
+```{r Load}
+daily <- read_csv("https://raw.githubusercontent.com/d-ev-craig/DATA606/main/Project/3.RawData/APPData/BehaviorQuestionsDaily.csv")
+
+#habitReport <- read_csv("https://raw.githubusercontent.com/d-ev-craig/DATA606/main/Project/3.RawData/APPData/QuestionsHabitReport.csv")
+
+selfControl <- read_csv("https://raw.githubusercontent.com/d-ev-craig/DATA606/main/Project/3.RawData/APPData/QuestionsSelfControlScale.csv")
+
+```
+<style type="text/css">
+  body{
+  font-size: 12pt;
+  font-family: Times New Roman;
+  line-height:2;
+}
+</style>
+
+
+
+
+
+### Part 1 - Introduction & Abstract
+
+|    How does self control impact habits? Does self control have any impact on habits? Habit formation is a crucial part of life success and satisfaction as most individuals devote a large portion of their time to developing rewarding habits. Good news for the weak-willed, and surprising news for the disciplined, a study finds that individuals with higher capacity for self control, in fact, does not increase one's ability to form habits. This project will be following the work of [A Longitudinal Field Study on the Role of Self-Control in Habit Formation](https://www.frontiersin.org/articles/10.3389/fpsyg.2020.00560/full) by utilizing their data to re-create a similar analysis to answer the question: "Do individuals that have higher self control capacity see improved ability in habit execution?"
+|    Please note the differences between the above proposed question and the study's. The question this analysis is focused on is the impact of an individual's level of self control, as measured by the Brief Self Control Scale, and their ability to execute the desired action. The study's focus was on the development of habits over time, where as this analysis is focused on a point of time. Since the following work is an unrelated venture, the phrashing "this analysis" or "this work" will be used to refer to any work contained within this notebook and resulting presentation to further make clear the differences.
+
+#### Foreword on Criticisms and Limitations
+|    Re-purposing data from a study can muddy validity of interpretation due to potential misalignment in data collection methodology and the intended "new" research question. There were challenges in interpreting data collection and the intended metric from original study to this analysis, mainly language. The original study's stewards were gracious enough to allow me their data and were available for questions about data structure, but misinterpretation is still possible. Another potential pitfall of this analysis was an attempt at removing the concept of "progression over time" from the data. In short, it is best to think of this analysis as an attempt and lesson of re-purposing a data set for analysis that was collected in a specific manner to include factors not meant to be removed. 
+
+
+### Part 2 - Data
+
+#### Summary
+|    The dataset is comprised of an individual's reported metrics in the three areas of habit strength, daily habit executions/goal compliance behavior, and self control capacity. Measuring habit growth daily with a phone app, self control capacity with the bi-weekly Brief Self Control Scale, and habit strength with the bi-weekly Self-Report Habit Index allowed a basis for measuring a baseline of habit strength and self control-capacity. By analyzing the progression of these measurements, the testers could ultimately measure and determine impact of self-control capacity on habit formation.
+
+|    To answer **this** analysis' research question, focus will be set on daily habit execution and self control capacity within segments of time and by question. A comparison between average scores of habit execution from individuals with low, mid, and high levels of self control will be used to answer the question: "Do individuals that have higher self control capacity see improved ability in habit execution?"
+
+|    The simplified explanation of what work and interpretation of the data is as follows:
+|    1. Segment the data into three factors of time
+|    2. Establish an individual's over self control capacity scores across the entire duration of the study to determine quantiles and thus classify if a user is high, mid, or low in self control capacity.
+|    3. Establish an individual's self control capacity within the time segment
+|    4. Establish average scores of the daily habit questions procured from the phone app will be used as measures of one's ability to execute a habit.
+|    5. Classify the average scores of daily habit execution by the participant's self control capacity level
+|    6. Attempt inference at the relationship between habit execution and self control capacity
+
+
+#### Collection
+
+|    The data was collected by sampling the population register of the city of Utrecht, Netherlands. All participants are between the ages of 18 and 65 with access to a smartphone.  
+
+|    At the beginning of the study, a specific behavior was chosen by the participants for the purpose of increasing the occurrence the behavior. This behavior could not already be regularly performed and be performed on a daily basis (ie. eating fruit). This behavior would have a chosen context (ie. eating fruit *at breakfast*). Participants then installed an app for daily questions and tests. 
+
+|    Since the goal of this study is to measure the impact of self-control capacity on habit formation, there were three main assessments used to gather data; Self control capacity, goal congruent behavior, and habit strength.
+
+|    A total of 146 participants, who completed at least one follow-up assessment for habit strength were used in the study. There were 169 total participants for daily habit execution, 162 averages for an individual's habit strength, and 148 averages for self control capacity assessments. This analysis will re-use the data associated with the 146 participants.
+
+#### Metholodogy of Metrics  
+|    Self-control capacity was measured using a bi-weekly [Brief Self-Control Scale](https://onlinelibrary.wiley.com/doi/10.1111/j.0022-3506.2004.00263.x) which would consist of 13 statements describing their level of self control in general with responses on a Likert scale (1 to 5, with 1 being "not at all" and 5 being "very much"). Self-control capacity was measured 2 to 9 times pending the participant. Individuals who completed at least one follow-up assessment were included in the analysis.  This scale was originally referenced from the following study [here](https://onlinelibrary.wiley.com/doi/10.1111/j.0022-3506.2004.00263.x)
+|     Habit execution was measured with by the daily phone app questions in 3 questions. These questions are translated and while a part of their meaning may be lost, their rough effects for the study are maintained.
+|    1. Did the context you chose for your habit occur today? (ie. Did you have breakfast today?)
+|    2. Did you perform your chosen habit today? (ie. Did you eat fruit toay?)
+|    3. Did you perform your chosen habit in the chosen context today? (ie. Did you eat fruit at breakfast today?)
+|    The series of questioning for habit execution expanded into 3 more questions if habit execution failed and were meant to measure attribution of failure. This analysis will focus on the first 3 as sources for measurement of habit execution.
+
+#### Data Source
+|    The source of this data collection is from [A Longitudinal Field Study on the Role of Self-Control in Habit Formation](https://www.frontiersin.org/articles/10.3389/fpsyg.2020.00560/full), with a full citation at the end of this proposal. It involved the following authors Anouk van der Weiden, Jeroen Benjamins, Marleen Gillebaart, Jan Fekke Ybema, and Denise de Ridder. The data was stored in several csv files that they agreed to share.
+
+### Part 3 - Exploratory data analysis
+
+|    For exploratory purposes, if there is a difference between individuals of differing "levels" of self control and their ability to execute habits, then it would be best to start identifying the spectrum of scores. To perform this, averages of scores per person within segments of time are needed.
+|    This first code chunk is adding variables we require such as the time segment and a transformation into a longer format that was easier to process.
+
+```{r dailyCounts Slicing}
+### Daily Habit Execution Segment Variable Creation
+# We segmented the data into thirds, determined by number of day (Max day was 147, chose to split on 48s)
+# We do this to allow for drawing relationships over time
+#range(daily$DAY)
+daily <- daily %>% 
+  group_by(PPN) %>% 
+  mutate(SEGMENT = ifelse(DAY < 48, '1', ifelse(DAY >= 48 & DAY < 96, '2', '3')))
+
+dailyAVG <- daily %>%
+  mutate(avg = mean(c(Q1,Q2,Q3)))
+
+# Creating a new DF per segment
+dailySeg1 <- daily %>%
+  filter(SEGMENT == '1')
+dailySeg2 <- daily %>%
+  filter(SEGMENT == '2')
+dailySeg3 <- daily %>%
+  filter(SEGMENT == '3')
+
+## Longer Transformation
+dailyLonger <- daily %>% select(-Q4,-Q5,-Q6) %>%
+  pivot_longer(cols = starts_with("Q"), 
+               names_to = "Question", 
+               values_to = "Response")
+
+dailyLongerSeg1 <- dailyLonger %>% 
+  filter(SEGMENT == '1')
+dailyLongerSeg2 <- dailyLonger %>% 
+  filter(SEGMENT == '2')
+dailyLongerSeg3 <- dailyLonger %>% 
+  filter(SEGMENT == '3')
+paged_table(daily)
+paged_table(dailyLongerSeg1)
+```
+
+|    The next step is to add averages of the self control capacity scores to determine what level an individual's capacity ranked.
+```{r}
+## -------------------------------------- Self Control
+# selfControl <- selfControl %>% #Calculate the row-wise averages of each self control report
+#   rowwise() %>% 
+#   arrange(PPN) %>%
+#   mutate(avg = mean(c(Q1,Q2,Q3,Q4,Q5,Q6,Q7,Q8,Q9,Q10,Q11,Q12,Q13)))
+
+
+### Self Control Segment Variable Creation
+#range(selfControl$DAY) 
+#We are segmenting the data into thirds to remove the time variable, determined by number of day (Max day was 137, chose to split on 48s)
+selfControl <- selfControl %>% 
+  group_by(PPN) %>% 
+  mutate(SEGMENT = ifelse(DAY < 48, '1', ifelse(DAY >= 48 & DAY < 96, '2', '3')))
+
+#Below we have our table of participants' average self control scores across the entire study, we will utilize this to determine our breakpoints of low, mid, high classification
+#Below code will take the average of column 
+selfControlAVG <- selfControl %>% 
+  group_by(PPN) %>%
+  summarise(pAVG = mean(c(Q1,Q2,Q3,Q4,Q5,Q6,Q7,Q8,Q9,Q10,Q11,Q12,Q13)))
+
+paged_table(selfControl)
+paged_table(selfControlAVG)
+```
+
+#### Self Control Capacity EDA
+|    Moving onto self control capacity, we see very small changes in the distribution of average scores between segments.
+|    From here, the next step is to classify each individual a classifier of being a low, mid, or high self control capacity class based on the above distribution
+starting with the distribution of average daily habit scores within each time segment is natural. The higher averages mean the individual performed their habit more often during that segment of time. Segments of time are 1 - 47, 48 - 95, and 96+ days. They are titled Segments 1, 2, and 3 in the dataframes, respectively.
+
+```{r}
+#Create New Table for Each individual's control class at each segment, create a segment average, and a segment control class
+#Does it matter that I kept the same IQR from all reports instead of just Segment Averages as opposed to running another IQR on Segment Averages and classifying the segment that way?
+summary(selfControlAVG$pAVG) #If >= 1.74 they're high, 1.74 > x <= 1.30 mid, 1.3>x then low
+
+#Average the scores within each segment, classify the segment's avg score
+selfControlClass <- selfControl %>%
+  #select(PPN,DATE,avg,SEGMENT,CONTROLCLASS) %>%
+  group_by(PPN,SEGMENT) %>%
+  mutate(SEGAVG = mean(c(Q1,Q2,Q3,Q4,Q5,Q6,Q7,Q8,Q9,Q10,Q11,Q12,Q13))) %>%
+  mutate(SEGCLASS = ifelse(SEGAVG <1.30, 'Low', ifelse(SEGAVG >= 1.30 & SEGAVG < 1.75, 'Mid', 'High'))) %>%
+  mutate(SEGMENT = factor(SEGMENT, levels = c('1','2','3'))) %>%
+  mutate(SEGCLASS = factor(SEGCLASS, levels = c('Low','Mid','High')))
+
+ggplot(data = selfControlAVG, aes(x = pAVG)) +
+  geom_histogram(fill = 'lightblue',color='grey',binwidth = .05) + labs( x = "Avg Score of Self Control Capacity", y = "# of People",) + theme_light() + geom_vline(xintercept = mean(selfControlAVG$pAVG, na.rm = TRUE), lty = 'dashed', color = 'red')
+
+paged_table(selfControlClass)
+```
+
+|    Recall, the intent is to compare average scores for each question inside each segment between low, mid, and high self control groups to see if there is a difference. To accomplish this, establishing average scores of daily questions is needed to represent that participant's ability to execute the habit. From there, a relationship between daily question score averages in a time segment can be related to the self control capacity's class (low, mid, or high).  
+|    Since these questions could be seen as a progression of habit execution, this analysis will compare the ability of each self control capacity class to execute between the same questions, rather than performing an analysis in aggregate of questions (ie. comparing how a high self control participant's likelihood to answer Q1+Q2+Q3 to a low self control participant). This decision was made mainly in the interest of work scope. Null values are removed that were introduced by individuals that may not have completed a Self Control Capacity report within that segment of time.
+```{r}
+#Create the score average for each question within a segment to represent that participants' ability to execute their habit
+dailySeg1Avg <- dailyLongerSeg1 %>%
+  group_by(PPN, Question) %>%
+  summarize(Avg_Response = mean(Response, na.rm = TRUE))
+
+dailySeg2Avg <- dailyLongerSeg2 %>%
+  group_by(PPN, Question) %>%
+  summarize(Avg_Response = mean(Response, na.rm = TRUE))
+
+dailySeg3Avg <- dailyLongerSeg3 %>%
+  group_by(PPN, Question) %>%
+  summarize(Avg_Response = mean(Response, na.rm = TRUE))
+
+#Joining the average scores to the classifiers of Self Control Capacity of that person during that segment
+dailySeg1AvgClass <- left_join(dailySeg1Avg,selfControlClass 
+                               %>% filter(SEGMENT == '1') 
+                               %>% select(SEGMENT,PPN,SEGCLASS) 
+                               %>% unique(), by = "PPN")
+dailySeg1AvgClass <- dailySeg1AvgClass[complete.cases(dailySeg1AvgClass),] #Remove nulls from not filling out Self Control Index Report
+
+dailySeg2AvgClass <- left_join(dailySeg2Avg,selfControlClass 
+                               %>% filter(SEGMENT == '2') 
+                               %>% select(SEGMENT,PPN,SEGCLASS) 
+                               %>% unique(), by = "PPN")
+dailySeg2AvgClass <- dailySeg2AvgClass[complete.cases(dailySeg2AvgClass),]
+
+dailySeg3AvgClass <- left_join(dailySeg3Avg,selfControlClass 
+                               %>% filter(SEGMENT == '3') 
+                               %>% select(SEGMENT,PPN,SEGCLASS) 
+                               %>% unique(), by = "PPN")
+dailySeg3AvgClass <- dailySeg3AvgClass[complete.cases(dailySeg3AvgClass),]
+
+paged_table(dailySeg1Avg)
+paged_table(dailySeg1AvgClass)
+```
+
+
+```{r Alternative EDA Presentation by Segment}
+
+q1Seg1Plot <- ggplot(data = dailySeg1AvgClass[dailySeg1AvgClass$Question == 'Q1',], aes(x = SEGCLASS, y = Avg_Response)) +
+  geom_violin(fill = "lightblue", trim = TRUE) +
+  labs(x = "Question", y = "Average Habit Score", title = "Q1 | Day 1 - 47: Daily Habit Response Scores")
+
+q2Seg1Plot <- ggplot(data = dailySeg1AvgClass[dailySeg1AvgClass$Question == 'Q2',], aes(x = SEGCLASS, y = Avg_Response)) +
+  geom_violin(fill = "lightblue", trim = TRUE) +
+  labs(x = "Question", y = "Average Score", title = "Q2 | Day 1 - 47: Daily Habit Response Scores")
+
+q3Seg1Plot <- ggplot(data = dailySeg1AvgClass[dailySeg1AvgClass$Question == 'Q3',], aes(x = SEGCLASS, y = Avg_Response)) +
+  geom_violin(fill = "lightblue", trim = TRUE) +
+  labs(x = "Question", y = "Average Score", title = "Q3 | Day 1 - 47: Daily Habit Response Scores")
+
+
+plot_grid(q1Seg1Plot,q2Seg1Plot,q3Seg1Plot, nrow = 1)
+summary(dailySeg1Avg[dailySeg1Avg$Question == 'Q1',]$Avg_Response)
+summary(dailySeg1Avg[dailySeg1Avg$Question == 'Q2',]$Avg_Response)
+summary(dailySeg1Avg[dailySeg1Avg$Question == 'Q3',]$Avg_Response)
+
+```
+
+
+```{r}
+q1Seg2Plot <- ggplot(data = dailySeg2AvgClass[dailySeg2AvgClass$Question == 'Q1',], aes(x = SEGCLASS, y = Avg_Response)) +
+  geom_violin(fill = "lightblue", trim = TRUE) +
+  labs(x = "Question", y = "Average Habit Score", title = "Q1 | Day 48 - 95: Daily Habit Response Scores")
+
+q2Seg2Plot <- ggplot(data = dailySeg2AvgClass[dailySeg2AvgClass$Question == 'Q2',], aes(x = SEGCLASS, y = Avg_Response)) +
+  geom_violin(fill = "lightblue", trim = TRUE) +
+  labs(x = "Question", y = "Average Score", title = "Q2 | Day 48 - 95: Daily Habit Response Scores")
+
+q3Seg2Plot <- ggplot(data = dailySeg2AvgClass[dailySeg2AvgClass$Question == 'Q3',], aes(x = SEGCLASS, y = Avg_Response)) +
+  geom_violin(fill = "lightblue", trim = TRUE) +
+  labs(x = "Question", y = "Average Score", title = "Q3 | Day 48 - 95: Daily Habit Response Scores")
+
+
+plot_grid(q1Seg2Plot,q2Seg2Plot,q3Seg2Plot, nrow = 1)
+summary(dailySeg2Avg[dailySeg2Avg$Question == 'Q1',]$Avg_Response)
+summary(dailySeg2Avg[dailySeg2Avg$Question == 'Q2',]$Avg_Response)
+summary(dailySeg2Avg[dailySeg2Avg$Question == 'Q3',]$Avg_Response)
+```
+
+
+
+```{r EDA Q1 Violin}
+# Violin plot
+
+q1Seg3Plot <- ggplot(data = dailySeg3AvgClass[dailySeg3AvgClass$Question == 'Q1',], aes(x = SEGCLASS, y = Avg_Response)) +
+  geom_violin(fill = "lightblue", trim = TRUE) +
+  labs(x = "Question", y = "Average Habit Score", title = "Q1 | Day 96+: Daily Habit Response Scores")
+
+
+q2Seg3Plot <- ggplot(data = dailySeg3AvgClass[dailySeg3AvgClass$Question == 'Q2',], aes(x = SEGCLASS, y = Avg_Response)) +
+  geom_violin(fill = "lightblue", trim = TRUE) +
+  labs(x = "Question", y = "Average Score", title = "Q2 | Day 96+: Daily Habit Response Scores")
+
+q3Seg3Plot <- ggplot(data = dailySeg3AvgClass[dailySeg3AvgClass$Question == 'Q3',], aes(x = SEGCLASS, y = Avg_Response)) +
+  geom_violin(fill = "lightblue", trim = TRUE) +
+  labs(x = "Question", y = "Average Score", title = "Q3 | Day 96+: Daily Habit Response Scores")
+
+
+
+
+plot_grid(q1Seg3Plot,q2Seg3Plot,q3Seg3Plot, nrow = 1)
+summary(dailySeg3Avg[dailySeg3Avg$Question == 'Q1',]$Avg_Response)
+summary(dailySeg3Avg[dailySeg3Avg$Question == 'Q2',]$Avg_Response)
+summary(dailySeg3Avg[dailySeg3Avg$Question == 'Q3',]$Avg_Response)
+
+```
+
+
+### Part 4 - Inference
+
+|    Our inference will be attempting to tease out the relationship between habit execution scores and the class of self control capacity. To determine if the averages between the low, mid, and high self control capacity groups is different, we will use the `infer` package to run ANOVA. First, question averages within Days 1 - 47
+
+
+```{r}
+anovaSeg1Q1 <- aov(Avg_Response ~ SEGCLASS, data = dailySeg1AvgClass[dailySeg1AvgClass$Question == 'Q1',])
+summary(anovaSeg1Q1)
+
+anovaSeg1Q2 <- aov(Avg_Response ~ SEGCLASS, data = dailySeg1AvgClass[dailySeg1AvgClass$Question == 'Q2',])
+summary(anovaSeg1Q2)
+
+anovaSeg1Q3 <- aov(Avg_Response ~ SEGCLASS, data = dailySeg1AvgClass[dailySeg1AvgClass$Question == 'Q3',])
+summary(anovaSeg1Q3)
+
+```
+|    No significant variance between the groups was found with ANOVA. On to questions 2 and 3.
+
+```{r}
+anovaSeg2Q1 <- aov(Avg_Response ~ SEGCLASS, data = dailySeg2AvgClass[dailySeg2AvgClass$Question == 'Q1',])
+summary(anovaSeg2Q1)
+
+anovaSeg2Q2 <- aov(Avg_Response ~ SEGCLASS, data = dailySeg2AvgClass[dailySeg2AvgClass$Question == 'Q2',])
+summary(anovaSeg2Q2)
+
+anovaSeg2Q3 <- aov(Avg_Response ~ SEGCLASS, data = dailySeg2AvgClass[dailySeg2AvgClass$Question == 'Q3',])
+summary(anovaSeg2Q3)
+```
+
+```{r}
+anovaSeg3Q1 <- aov(Avg_Response ~ SEGCLASS, data = dailySeg3AvgClass[dailySeg3AvgClass$Question == 'Q1',])
+summary(anovaSeg3Q1)
+
+anovaSeg3Q2 <- aov(Avg_Response ~ SEGCLASS, data = dailySeg3AvgClass[dailySeg3AvgClass$Question == 'Q2',])
+summary(anovaSeg3Q2)
+
+anovaSeg3Q3 <- aov(Avg_Response ~ SEGCLASS, data = dailySeg3AvgClass[dailySeg3AvgClass$Question == 'Q3',])
+summary(anovaSeg3Q3)
+```
+
+
+
+### Part 5 - Conclusion
+|    The original study's findings from this data were that there were no apparent benefits of self control capacity in the formation of habits over time. My analysis finds a similar conclusion in a person's ability to actually execute a desired action, specifically within time spans of about 45 days. None of the ANOVA F Stats were significant at 95% Confidence levels. There does not seem to be a statistically significant difference in an individual of high self control capacity vs mid or low capacity.
+
+#### Potential Extensions
+|    Analysis in aggregate of question scores and rate of habit formation to see if self control capacity expresses itself in broader ranges of time or scope could a method to expand on self control capacity's effects. The main study goes deeper into this and would be a good source for more information if interested in more.
+
+### References
+
+[Main Study](https://www.frontiersin.org/articles/10.3389/fpsyg.2020.00560/full#B28)
+van der Weiden A, Benjamins J, Gillebaart M, Ybema JF and de Ridder D (2020) How to Form Good Habits? A Longitudinal Field Study on the Role of Self-Control in Habit Formation. Front. Psychol. 11:560. doi: 10.3389/fpsyg.2020.00560
+
+
+[Brief Self Control Scale](https://onlinelibrary.wiley.com/doi/10.1111/j.0022-3506.2004.00263.x)
+Tangney, J.P., Baumeister, R.F. and Boone, A.L. (2004), High Self-Control Predicts Good Adjustment, Less Pathology, Better Grades, and Interpersonal Success. Journal of Personality, 72: 271-324. https://doi.org/10.1111/j.0022-3506.2004.00263.x

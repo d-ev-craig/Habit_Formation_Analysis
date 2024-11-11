@@ -1,0 +1,197 @@
+---
+title: "Project Proposal"
+author: "Daniel Craig"
+date: "2023-04-21"
+output: rmdformats::readthedown
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(rmarkdown)
+library(ggplot2)
+library(tidyverse)
+```
+<style type="text/css">
+  body{
+  font-size: 12pt;
+  font-family: Times New Roman;
+  line-height:2;
+}
+</style>
+
+### Data Preparation
+
+|    Little to no data preparation has been needed as the data has been setup in a very tidy fashion. Below code chunks will involve code used to generate the statistical summary.
+
+```{r}
+daily <- read_csv("https://raw.githubusercontent.com/d-ev-craig/DATA606/main/Project/3.RawData/APPData/BehaviorQuestionsDaily.csv?token=GHSAT0AAAAAACGZFKJEWX4RRIBQY2NUZMDOZJC7DSQ")
+
+lexical <- read_csv("https://raw.githubusercontent.com/d-ev-craig/DATA606/main/Project/3.RawData/APPData/lexical.csv?token=GHSAT0AAAAAACGZFKJF6XGG3Y4BQDILQZ6OZJC7EDQ")
+
+habitReport <- read_csv("https://raw.githubusercontent.com/d-ev-craig/DATA606/main/Project/3.RawData/APPData/QuestionsHabitReport.csv?token=GHSAT0AAAAAACGZFKJEHKKNW6V5EDGCSXUWZJC7EOQ")
+
+selfControl <- read_csv("https://raw.githubusercontent.com/d-ev-craig/DATA606/main/Project/3.RawData/APPData/QuestionsSelfControlScale.csv?token=GHSAT0AAAAAACGZFKJFHLGJ3H7JCTVQWDHSZJC7EWA")
+
+
+## Daily Habit Counts
+
+dailyCounts1 <- daily %>% 
+  count(PPN,Q1) %>%
+  filter(Q1 == '1')
+meanQ1 <- mean(dailyCounts1$n )
+
+
+## Habit Reports Section
+habitReports <- habitReport %>%
+  rowwise() %>%
+  arrange(PPN) %>%
+  mutate(avg = mean(c(Q1,Q2,Q3,Q4,Q5,Q6,Q7,Q8,Q9,Q10,Q11,Q12)))
+
+habitReportsAVG <- habitReports %>%
+  group_by(PPN) %>%
+  summarise(pAVG = mean(avg))
+
+## Self Control
+selfControl <- selfControl %>%
+  rowwise() %>%
+  arrange(PPN) %>%
+  mutate(avg = mean(c(Q1,Q2,Q3,Q4,Q5,Q6,Q7,Q8,Q9,Q10,Q11,Q12,Q13)))
+
+selfControlAVG <- selfControl %>%
+  group_by(PPN) %>%
+  summarise(pAVG = mean(avg))
+
+
+daily
+habitReport
+selfControl
+lexical
+
+map_dbl(daily,min)
+```
+
+### Research question 
+
+|    Do individuals that have a higher capacity for self control see improved performance in habit formation?
+
+### Cases 
+
+|    Each case are an individual's reported metrics in the three areas of habit strength, daily habit executions/goal compliance behavior, and self control capacity.
+|    Although a total of 146 participants, who completed at least one follow-up assessment for habit strength were used in the study, this dataset has 148 cases where the participant completed at least one follow up assesment for habit strength. There were 169 total participants for daily habit execution, 162 averages for an individual's habit strength, and 148 averages for self control capacity assessments. There will be 148 cases used unless the discrepancy between the 146 in the official work and the current 148 is found.
+
+```{r}
+length(unique(dailyCounts1$PPN))
+length(unique(habitReportsAVG$PPN))
+length(unique(selfControlAVG$PPN))
+
+joinedTable <- left_join(dailyCounts1,habitReportsAVG, by= 'PPN')
+
+joinedTable <- joinedTable %>% rename(habitAVG = pAVG)
+
+joinedTable <- left_join(joinedTable,selfControlAVG, by = 'PPN')
+
+
+joinedTable
+
+joinedTable <- joinedTable[complete.cases(joinedTable),]
+#joinedTable <- joinedTable[,-6]
+joinedTable <- joinedTable %>% rename(selfControlAVG = pAVG)
+paged_table(joinedTable)
+```
+
+### Data collection 
+|    The data was collected by sampling the population register of the city of Utrecht. All participants are between the ages of 18 and 65 with access to a smartphone.  
+|    At the beginning, a specific behavior was chosen by the participants for the specific purpose of increasing the occurrence the behavior. This behavior could not already be regularly performed and be performed on a daily basis. This behavior would have a chosen context (ie. running 10 minutes for an hour, being patient with someone in a conversation). Participants then installed an app for daily questions and tests. 
+|    Since the goal of this study is to measure the impact of self-control capacity on habit formation, there were three main assessments used to gather data; Self control capacity, goal congruent behavior, and habit strength.
+|    Self-control capacity was measured using a bi-weekly [Brief Self-Control Scale](https://www.frontiersin.org/articles/10.3389/fpsyg.2020.00560/full#B28) which would consist of 13 statements describing their level of self control in general with responses on a Likert scale (1 to 5, with 1 being "not at all" and 5 being "very much"). Self-control capacity was measured 2 to 9 times pending the participant. Individuals who completed at least one follow-up assessment were included in the analysis.
+|    Behavior was measured dichotomously through the phone app on whether the participant performed the behavior that day.
+|    Habit strength was measured bi-weekly with a [Self-Report Habit Index]() that consisted of 12 statements based on frequency of behavior (ie. Eating fruit frequently, automatically, without thinking, etc.) with responses indicating whether participants felt it applied to them from a scale of 1 (completely disagree) to 7(completely agree).
+|    Measuring habit growth with the daily app, self control capacity with the bi-weekly Brief Self-Control Scale, and habit strength with the bi-weekly Self-Report Habit Index allowed a basis for measuring a baseline of habit strength and self control-capacity. By analyzing the progression of these measurements, the testers could ultimately measure and determine impact of self-control capacity on habit formation.
+
+
+### Type of study 
+
+This study is observational as no factor levels or controls were put in place, just an observation of self-control and behavior execution ratings.
+
+### Data Source 
+
+The source of this data collection is from [A Longitudinal Field Study on the Role of Self-Control in Habit Formation](https://www.frontiersin.org/articles/10.3389/fpsyg.2020.00560/full), with a full citation at the end of this proposal. It involved the following authors Anouk van der Weiden, Jeroen Benjamins, Marleen Gillebaart, Jan Fekke Ybema, and Denise de Ridder.
+
+
+### Dependent Variable
+|    The dependent variable in this study is habit strength as a quantitative variable*******
+
+### Independent Variable(s)
+|    Independent variables in this study were an individuals self-control capacity and goal-congruent behavior.
+
+### Summary Statistics
+
+```{r}
+
+
+## Daily Habit COunts
+sdQ1 <- sd(dailyCounts1$n)
+
+minQ1 <- min(dailyCounts1$n)
+
+maxQ1 <- max(dailyCounts1$n)
+
+q25 <- quantile(dailyCounts1$n)
+
+print(paste('The average number of times a participant reported they had performed their daily behavior as completed in question 1 was', round(meanQ1, digits =2), 'with a standard deviation of',round(sdQ1, digits =2),', a minimum of', minQ1,'a max of ',maxQ1,', and the following quantiles: ',q25[1],q25[2],q25[3],q25[4],q25[5],'.'))
+
+
+dailyCounts2 <- daily %>% 
+  count(PPN,Q2) %>%
+  filter(Q2 == '1')
+meanQ2 <- mean(dailyCounts2$n )
+
+sdQ2 <- sd(dailyCounts2$n)
+
+minQ2 <- min(dailyCounts2$n)
+
+maxQ2 <- max(dailyCounts2$n)
+
+q252 <- quantile(dailyCounts2$n)
+
+print(paste0('The average number of times a participant reported they had performed their daily behavior within context as completed in question 2 was', round(meanQ2, digits =2), 'with a standard deviation of',round(sdQ2, digits =2),', a median of ' ,median(round(meanQ2, digits = 2)),' a minimum of ',minQ2,' a max of ',maxQ2,'and the following quantiles: ',q252[1],q252[2],q252[3],q252[4],q252[5],'.'))
+
+
+## Habit Reports Section
+
+qHabitReportsAVG <- round(quantile(habitReportsAVG$pAVG), digits = 2)
+
+sdHabitReportsAVG <- round(sd(habitReportsAVG$pAVG), digits = 2)
+
+print(paste0('The average scores by person on the Self Report Habit Index that measures habit strength are as follows: a minimum at ' ,round(summary(habitReportsAVG$pAVG)[1], digits =2),' a mean at ', round(summary(habitReportsAVG$pAVG)[3], digits =2),' a standard deviation of ',sdHabitReportsAVG,' a maximum of ',round(summary(habitReportsAVG$pAVG)[6], digits =2),' and quantiles ',qHabitReportsAVG[1], qHabitReportsAVG[2], qHabitReportsAVG[3],  qHabitReportsAVG[4], qHabitReportsAVG[5]))
+
+
+##Self Control Section
+
+qSelfControlAVG <- round(quantile(selfControlAVG$pAVG), digits = 2)
+
+sdSelfControlAVG <- round(sd(selfControlAVG$pAVG), digits = 2)
+
+print(paste0('The average scores by person on the Self Report Habit Index that measures self-control capacity are as follows: a minimum at ' ,round(summary(selfControlAVG$pAVG)[1], digits =2),', a mean at ', round(summary(selfControlAVG$pAVG)[3], digits =2),', a standard deviation of ',sdSelfControlAVG,', a maximum of ',round(summary(selfControlAVG$pAVG)[6], digits =2),' and quantiles ',qSelfControlAVG[1],' ', qSelfControlAVG[2],' ', qSelfControlAVG[3], ' ', qSelfControlAVG[4], ' ', qSelfControlAVG[5]))
+  
+```
+
+### Graphics
+
+```{r}
+d <- ggplot(data = dailyCounts1, aes(x = n))
+d +geom_histogram(fill = 'lightblue', color = 'grey') + labs(x = "# of Times Habit was Executed", y = "# of People") + geom_vline(xintercept = mean(dailyCounts1$n, na.rm = TRUE), lty = 'dashed')
+
+h <- ggplot(data = habitReportsAVG, aes(x = pAVG))
+h + geom_histogram(fill='lightblue',color = 'grey') + labs(x = "Avg Score of Habit Strength", y = "# of People") +  geom_vline(xintercept = mean(habitReportsAVG$pAVG, na.rm=TRUE), lty = 'dashed')
+
+s <- ggplot(data = selfControlAVG, aes(x = pAVG))
+s + geom_histogram(fill = 'lightblue',color='grey') + labs( x = "Avg Score of Self Control Capacity", y = "# of People",) + theme_light() + geom_vline(xintercept = mean(selfControlAVG$pAVG, na.rm = TRUE), lty = 'dashed')
+
+```
+
+
+#### Citations
+- van der Weiden A, Benjamins J, Gillebaart M, Ybema JF and de Ridder D (2020) How to Form Good Habits? A Longitudinal Field Study on the Role of Self-Control in Habit Formation. Front. Psychol. 11:560. doi: 10.3389/fpsyg.2020.00560
+

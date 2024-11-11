@@ -1,4 +1,4 @@
-# DATA606 Stats
+# Habit Formation in Humans Analysis
 This repository was a basic introduction to statistics covering distribtuions, hypothesis testing, confidence intervals, and regression.
 
 An in-depth look at the math involved behind these can be found in [ST517](https://github.com/d-ev-craig/ST517AppStatsI) and [ST518](https://github.com/d-ev-craig/ST518AppStatsII).
